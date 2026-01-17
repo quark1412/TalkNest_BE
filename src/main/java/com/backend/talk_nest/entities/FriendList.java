@@ -18,6 +18,17 @@ public class FriendList {
     @EmbeddedId
     private FriendListId id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("userId")
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("friendId")
+    @JoinColumn(name = "friend_id")
+    private User friend;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private FriendStatus status = FriendStatus.PENDING;
 

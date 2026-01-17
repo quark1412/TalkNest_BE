@@ -34,6 +34,7 @@ public class Message {
     @Column(name = "media_url")
     private String mediaUrl;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "message_type")
     private MessageType messageType = MessageType.TEXT;
 
