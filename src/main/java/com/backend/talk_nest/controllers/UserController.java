@@ -3,6 +3,7 @@ package com.backend.talk_nest.controllers;
 import com.backend.talk_nest.dtos.users.requests.CreateUserRequest;
 import com.backend.talk_nest.dtos.users.responses.UserResponse;
 import com.backend.talk_nest.services.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -19,7 +20,7 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<UserResponse> createUser(
-            @RequestBody CreateUserRequest request,
+            @Valid @RequestBody CreateUserRequest request,
             UriComponentsBuilder uriBuilder) {
         UserResponse response = userService.createUser(request);
         var uri = uriBuilder.path("/user/${id}").buildAndExpand(response.getId()).toUri();
