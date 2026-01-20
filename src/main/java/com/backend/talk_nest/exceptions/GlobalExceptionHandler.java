@@ -1,44 +1,53 @@
 package com.backend.talk_nest.exceptions;
 
-import com.backend.talk_nest.dtos.ErrorResponse;
+import com.backend.talk_nest.dtos.ApiResponse;
 import com.backend.talk_nest.utils.enums.ErrorCode;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.Objects;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse> handleSystemException(RuntimeException exception) {
+        ApiResponse apiResponse = ApiResponse.builder()
+                .code(ErrorCode.SYSTEM_ERROR.getCode())
+                .message(ErrorCode.SYSTEM_ERROR.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(500).body(apiResponse);
+    }
+
     @ExceptionHandler(AppException.class)
-    public ResponseEntity<ErrorResponse> handleException(AppException exception) {
+    public ResponseEntity<ApiResponse> handleAppException(AppException exception) {
         ErrorCode errorCode = exception.getErrorCode();
-        ErrorResponse errorResponse =
-                ErrorResponse.builder()
-                        .status(errorCode.getStatusCode().value())
+        ApiResponse apiResponse =
+                ApiResponse.builder()
                         .message(errorCode.getMessage())
                         .code(errorCode.getCode())
                         .timestamp(LocalDateTime.now())
                         .build();
-        return ResponseEntity.status(errorCode.getStatusCode()).body(errorResponse);
+        return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException exception) {
-        String message = Optional.ofNullable(exception.getBindingResult().getFieldError())
-                .map(FieldError::getDefaultMessage)
-                .orElse("Dữ liệu đầu vào không hợp lệ");
+    public ResponseEntity<ApiResponse> handleValidationException(MethodArgumentNotValidException exception) {
+        ErrorCode errorCode = ErrorCode.INPUT_INVALID;
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .message(message)
-                .code("INVALID_INPUT")
+        try {
+            errorCode = ErrorCode.valueOf(Objects.requireNonNull(exception.getFieldError()).getDefaultMessage());
+        } catch (IllegalArgumentException e){
+        }
+
+        ApiResponse apiResponse = ApiResponse.builder()
+                .message(errorCode.getMessage())
+                .code(errorCode.getCode())
                 .timestamp(LocalDateTime.now())
                 .build();
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
     }
 }

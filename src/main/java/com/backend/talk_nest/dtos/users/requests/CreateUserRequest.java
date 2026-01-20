@@ -8,12 +8,12 @@ import lombok.Data;
 
 @Data
 public class CreateUserRequest {
-    @NotBlank(message = "Username không được để trống")
-    @Size(min = 3, message = "Username phải có ít nhất 3 kí tự")
+    @NotBlank(message = "USERNAME_MISSING")
+    @Size(min = 3, message = "USERNAME_INVALID_LENGTH")
     private String username;
 
-    @NotBlank(message = "Email không được để trống")
-    @Email(message =  "Định dạng email không hợp lệ")
+    @NotBlank(message = "EMAIL_MISSING")
+    @Email(message =  "EMAIL_INVALID")
     private String email;
 
     @PasswordConstraint
