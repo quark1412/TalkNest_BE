@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -33,5 +36,17 @@ public class UserService {
 
         var savedUser =  userRepository.save(user);
         return userMapper.toResponse(savedUser);
+    }
+
+    public List<UserResponse> getAllUsers() {
+        var userList = userRepository.findAll();
+
+        return userList.stream().map(userMapper::toResponse).toList();
+    }
+
+    public UserResponse getUserById(String id) {
+        var user = userRepository.findById(UUID.fromString(id)).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        return userMapper.toResponse(user);
     }
 }
