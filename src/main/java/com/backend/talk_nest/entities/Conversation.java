@@ -1,9 +1,7 @@
 package com.backend.talk_nest.entities;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,7 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "conversations")
-@Getter @Setter @NoArgsConstructor
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Conversation {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -28,7 +26,7 @@ public class Conversation {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_message_id")
-    private Message message;
+    private Message lastMessage;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

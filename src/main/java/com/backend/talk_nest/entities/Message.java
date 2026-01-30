@@ -2,9 +2,7 @@ package com.backend.talk_nest.entities;
 
 import com.backend.talk_nest.utils.enums.MessageType;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,7 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "messages")
-@Getter @Setter @NoArgsConstructor
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

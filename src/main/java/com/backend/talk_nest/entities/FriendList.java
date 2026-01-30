@@ -3,9 +3,7 @@ package com.backend.talk_nest.entities;
 import com.backend.talk_nest.entities.ids.FriendListId;
 import com.backend.talk_nest.utils.enums.FriendStatus;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,7 +11,7 @@ import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "friend_list")
-@Getter @Setter @NoArgsConstructor
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class FriendList {
     @EmbeddedId
     private FriendListId id;
