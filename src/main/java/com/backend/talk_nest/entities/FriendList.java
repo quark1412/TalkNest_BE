@@ -1,32 +1,34 @@
 package com.backend.talk_nest.entities;
 
+import com.backend.talk_nest.entities.ids.FriendListId;
+import com.backend.talk_nest.utils.enums.FriendStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @Entity
-@Table(name = "conversations")
+@Table(name = "friend_list")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Conversation {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
+public class FriendList {
+    @EmbeddedId
+    private FriendListId id;
 
-    @Column(name = "title")
-    private String title;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("userId")
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    @Column(name = "is_group", nullable = false)
-    private Boolean isGroup;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("friendId")
+    @JoinColumn(name = "friend_id")
+    private User friend;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "last_message_id")
-    private Message lastMessage;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private FriendStatus status = FriendStatus.PENDING;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -43,10 +45,4 @@ public class Conversation {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "updated_by")
     private User updatedBy;
-
-    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
-    private List<Member> memberList;
-
-    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
-    private List<Message> messageList;
 }
