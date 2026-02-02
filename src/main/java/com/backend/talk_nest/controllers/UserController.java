@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Controller
@@ -28,7 +29,7 @@ public class UserController {
         var uri = uriBuilder.path("/user/{id}").buildAndExpand(data.getId()).toUri();
         ApiResponse<UserResponse> apiResponse = ApiResponse.<UserResponse>builder()
                 .data(data)
-                .timestamp(LocalDateTime.now())
+                .timestamp(OffsetDateTime.now())
                 .build();
         return ResponseEntity.created(uri).body(apiResponse);
     }
@@ -38,7 +39,7 @@ public class UserController {
         List<UserResponse> userResponseList = userService.getAllUsers();
         ApiResponse<List<UserResponse>> apiResponse = ApiResponse.<List<UserResponse>>builder()
                 .data(userResponseList)
-                .timestamp(LocalDateTime.now())
+                .timestamp(OffsetDateTime.now())
                 .build();
 
         return ResponseEntity.ok(apiResponse);
@@ -49,7 +50,7 @@ public class UserController {
         UserResponse userResponse = userService.getUserById(id);
         ApiResponse<UserResponse> apiResponse = ApiResponse.<UserResponse>builder()
                 .data(userResponse)
-                .timestamp(LocalDateTime.now())
+                .timestamp(OffsetDateTime.now())
                 .build();
 
         return ResponseEntity.ok(apiResponse);

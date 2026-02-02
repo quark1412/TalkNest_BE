@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Data
 @Builder
@@ -14,5 +14,5 @@ public class ApiResponse<T> {
     private int code = 1000;
     private String message;
     private T data;
-    private LocalDateTime timestamp;
+    private OffsetDateTime timestamp;
 }

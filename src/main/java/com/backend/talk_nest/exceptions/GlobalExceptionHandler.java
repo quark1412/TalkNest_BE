@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Objects;
 
 @RestControllerAdvice
@@ -17,7 +18,7 @@ public class GlobalExceptionHandler {
         ApiResponse apiResponse = ApiResponse.builder()
                 .code(ErrorCode.SYSTEM_ERROR.getCode())
                 .message(ErrorCode.SYSTEM_ERROR.getMessage())
-                .timestamp(LocalDateTime.now())
+                .timestamp(OffsetDateTime.now())
                 .build();
         return ResponseEntity.status(500).body(apiResponse);
     }
@@ -29,7 +30,7 @@ public class GlobalExceptionHandler {
                 ApiResponse.builder()
                         .message(errorCode.getMessage())
                         .code(errorCode.getCode())
-                        .timestamp(LocalDateTime.now())
+                        .timestamp(OffsetDateTime.now())
                         .build();
         return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
     }
@@ -46,7 +47,7 @@ public class GlobalExceptionHandler {
         ApiResponse apiResponse = ApiResponse.builder()
                 .message(errorCode.getMessage())
                 .code(errorCode.getCode())
-                .timestamp(LocalDateTime.now())
+                .timestamp(OffsetDateTime.now())
                 .build();
         return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
     }

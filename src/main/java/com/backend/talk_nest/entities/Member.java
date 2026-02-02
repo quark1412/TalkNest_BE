@@ -2,6 +2,7 @@ package com.backend.talk_nest.entities;
 
 import com.backend.talk_nest.entities.ids.MemberId;
 import com.backend.talk_nest.utils.enums.MemberRole;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -18,6 +19,7 @@ public class Member {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("conversationId")
+    @JsonIgnore
     @JoinColumn(name = "conversation_id")
     private Conversation conversation;
 

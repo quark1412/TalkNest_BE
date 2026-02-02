@@ -69,6 +69,8 @@ public class ConversationService {
             Member member = Member.builder()
                     .id(memberId)
                     .conversation(conversation)
+                    .isActive(false)
+                    .lastActive(OffsetDateTime.now())
                     .user(user)
                     .role(request.getType().equals(ConversationType.GROUP.toString()) && userId.equals(currentUser.getId().toString()) ? MemberRole.ADMIN : MemberRole.MEMBER)
                     .joinedAt(OffsetDateTime.now())
