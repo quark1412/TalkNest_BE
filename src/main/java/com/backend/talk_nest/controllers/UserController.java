@@ -55,4 +55,14 @@ public class UserController {
 
         return ResponseEntity.ok(apiResponse);
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> searchUsers(@RequestParam(required = false) String q) {
+        var results = userService.searchUsers(q);
+        ApiResponse<List<UserResponse>> apiResponse = ApiResponse.<List<UserResponse>>builder()
+                .data(results)
+                .timestamp(OffsetDateTime.now())
+                .build();
+        return ResponseEntity.ok(apiResponse);
+    }
 }

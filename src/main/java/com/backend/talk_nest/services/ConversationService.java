@@ -2,12 +2,18 @@ package com.backend.talk_nest.services;
 
 import com.backend.talk_nest.dtos.conversations.requests.CreateConversationRequest;
 import com.backend.talk_nest.dtos.conversations.responses.ConversationResponse;
+import com.backend.talk_nest.dtos.messages.SendMessageResponse;
+import com.backend.talk_nest.dtos.members.responses.MemberResponse;
+import com.backend.talk_nest.dtos.users.responses.UserResponse;
 import com.backend.talk_nest.entities.Conversation;
 import com.backend.talk_nest.entities.Member;
 import com.backend.talk_nest.entities.User;
 import com.backend.talk_nest.entities.ids.MemberId;
 import com.backend.talk_nest.exceptions.AppException;
 import com.backend.talk_nest.mappers.ConversationMapper;
+import com.backend.talk_nest.mappers.MemberMapper;
+import com.backend.talk_nest.mappers.MessageMapper;
+import com.backend.talk_nest.mappers.UserMapper;
 import com.backend.talk_nest.repositories.ConversationRepository;
 import com.backend.talk_nest.repositories.MemberRepository;
 import com.backend.talk_nest.repositories.UserRepository;
@@ -32,6 +38,9 @@ public class ConversationService {
     private final UserRepository userRepository;
     private final ConversationMapper conversationMapper;
     private final MemberRepository memberRepository;
+    private final MemberMapper memberMapper;
+    private final MessageMapper messageMapper;
+    private final UserMapper userMapper;
 
     @Transactional
     public ConversationResponse createConversation(CreateConversationRequest request) {
@@ -78,5 +87,43 @@ public class ConversationService {
             memberRepository.save(member);
         }
         return conversationMapper.toResponse(conversation);
+    }
+
+    public List<ConversationResponse> getConversationsForCurrentUser() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        List<Conversation> conversations = conversationRepository.findAllByMemberUserIdWithLastMessage(currentUser.getId());
+
+        List<ConversationResponse> responses = new ArrayList<>();
+        for (Conversation c : conversations) {
+            var resp = conversationMapper.toResponse(c);
+            if (c.getLastMessage() != null) {
+                resp.setLastMessage(messageMapper.toResponse(c.getLastMessage()));
+            }
+            if (!Boolean.TRUE.equals(c.getIsGroup())) {
+                for (Member m : c.getMemberList()) {
+                    if (!m.getUser().getId().equals(currentUser.getId())) {
+                        resp.setCounterpart(userMapper.toResponse(m.getUser()));
+                        break;
+                    }
+                }
+            }
+            responses.add(resp);
+        }
+
+        return responses;
+    }
+
+    @Transactional
+    public void leaveConversation(String conversationId) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        UUID cId = UUID.fromString(conversationId);
+        MemberId memberId = new MemberId(cId, currentUser.getId());
+        memberRepository.deleteById(memberId);
     }
 }

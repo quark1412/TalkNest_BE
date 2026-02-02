@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,4 +17,11 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
             "AND m1.user.id = :userAId " +
             "AND m2.user.id = :userBId ")
     Optional<Conversation> findPrivateConversation(@Param("userAId") UUID userAId, @Param("userBId") UUID userBId);
+
+    @Query("SELECT DISTINCT c FROM Conversation c " +
+            "LEFT JOIN FETCH c.memberList m " +
+            "LEFT JOIN FETCH c.lastMessage lm " +
+            "LEFT JOIN FETCH m.user u " +
+            "WHERE m.id.userId = :userId ")
+    List<Conversation> findAllByMemberUserIdWithLastMessage(@Param("userId") UUID userId);
 }

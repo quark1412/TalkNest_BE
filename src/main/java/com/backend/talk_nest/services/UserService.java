@@ -49,4 +49,9 @@ public class UserService {
 
         return userMapper.toResponse(user);
     }
+
+    public List<UserResponse> searchUsers(String q) {
+        var users = userRepository.searchByUsernameOrEmail(q == null ? "" : q);
+        return users.stream().map(userMapper::toResponse).toList();
+    }
 }
