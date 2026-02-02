@@ -4,7 +4,7 @@ import com.backend.talk_nest.dtos.conversations.responses.ConversationResponse;
 import com.backend.talk_nest.entities.Conversation;
 import org.mapstruct.Mapper;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {MemberMapper.class})
 public interface ConversationMapper {
     ConversationResponse toResponse(Conversation conversation);
 

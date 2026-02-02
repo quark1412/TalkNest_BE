@@ -7,8 +7,9 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface MemberMapper {
-    @Mapping(source = "id.conversationId", target = "conversationId")
-    @Mapping(source = "id.userId", target = "userId")
+    @Mapping(target = "conversationId", expression = "java(member.getId() != null && member.getId().getConversationId() != null ? member.getId().getConversationId().toString() : null)")
+    @Mapping(target = "userId", expression = "java(member.getId() != null && member.getId().getUserId() != null ? member.getId().getUserId().toString() : null)")
+    @Mapping(source = "role", target = "role")
     @Mapping(source = "isActive", target = "isActive")
     MemberResponse toResponse(Member member);
 

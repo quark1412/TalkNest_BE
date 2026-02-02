@@ -1,6 +1,6 @@
 package com.backend.talk_nest.dtos.conversations.responses;
 
-import com.backend.talk_nest.entities.Member;
+import com.backend.talk_nest.dtos.members.responses.MemberResponse;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +14,6 @@ public class ConversationResponse {
     private String id;
     private String title;
     private Boolean isGroup;
-    private List<Member> memberList;
+    private List<MemberResponse> memberList;
 
 }
