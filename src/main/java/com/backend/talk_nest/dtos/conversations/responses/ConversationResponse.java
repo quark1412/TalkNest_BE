@@ -19,5 +19,6 @@ public class ConversationResponse {
     private List<MemberResponse> memberList;
     private SendMessageResponse lastMessage;
     private UserResponse counterpart;
+    private String avatarUrl;
 
 }

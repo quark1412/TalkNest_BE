@@ -1,6 +1,9 @@
 package com.backend.talk_nest.services;
 
+import com.backend.talk_nest.dtos.conversations.requests.AddMembersRequest;
+import com.backend.talk_nest.dtos.conversations.requests.ChangeMemberRoleRequest;
 import com.backend.talk_nest.dtos.conversations.requests.CreateConversationRequest;
+import com.backend.talk_nest.dtos.conversations.requests.UpdateConversationRequest;
 import com.backend.talk_nest.dtos.conversations.responses.ConversationResponse;
 import com.backend.talk_nest.dtos.messages.SendMessageResponse;
 import com.backend.talk_nest.dtos.members.responses.MemberResponse;
@@ -125,5 +128,138 @@ public class ConversationService {
         UUID cId = UUID.fromString(conversationId);
         MemberId memberId = new MemberId(cId, currentUser.getId());
         memberRepository.deleteById(memberId);
+    }
+
+    @Transactional
+    public ConversationResponse updateConversation(String conversationId, UpdateConversationRequest request) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = auth.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        UUID cId = UUID.fromString(conversationId);
+        Conversation conversation = conversationRepository.findById(cId).orElseThrow(() -> new AppException(ErrorCode.INPUT_INVALID));
+
+        if (!Boolean.TRUE.equals(conversation.getIsGroup())) {
+            throw new AppException(ErrorCode.INPUT_INVALID);
+        }
+
+        MemberId currentMemberId = new MemberId(cId, currentUser.getId());
+        Member currentMember = memberRepository.findById(currentMemberId).orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+
+        if (!MemberRole.ADMIN.equals(currentMember.getRole())) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        if (request.getTitle() != null) {
+            conversation.setTitle(request.getTitle());
+        }
+        if (request.getAvatarUrl() != null) {
+            conversation.setAvatarUrl(request.getAvatarUrl());
+        }
+        conversation.setUpdatedBy(currentUser);
+        conversationRepository.save(conversation);
+
+        return conversationMapper.toResponse(conversation);
+    }
+
+    @Transactional
+    public void addMembers(String conversationId, AddMembersRequest request) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = auth.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        UUID cId = UUID.fromString(conversationId);
+        Conversation conversation = conversationRepository.findById(cId).orElseThrow(() -> new AppException(ErrorCode.INPUT_INVALID));
+
+        if (!Boolean.TRUE.equals(conversation.getIsGroup())) {
+            throw new AppException(ErrorCode.INPUT_INVALID);
+        }
+
+        MemberId currentMemberId = new MemberId(cId, currentUser.getId());
+        Member currentMember = memberRepository.findById(currentMemberId).orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+
+        if (!MemberRole.ADMIN.equals(currentMember.getRole())) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        for (String userIdStr : request.getUserIds()) {
+            UUID userId = UUID.fromString(userIdStr);
+            User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+            MemberId memberId = new MemberId(cId, user.getId());
+            if (memberRepository.existsById(memberId)) {
+                continue;
+            }
+
+            Member member = Member.builder()
+                    .id(memberId)
+                    .conversation(conversation)
+                    .isActive(true)
+                    .lastActive(OffsetDateTime.now())
+                    .user(user)
+                    .role(MemberRole.MEMBER)
+                    .joinedAt(OffsetDateTime.now())
+                    .build();
+            memberRepository.save(member);
+        }
+    }
+
+    @Transactional
+    public void removeMember(String conversationId, String userIdStr) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = auth.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        UUID cId = UUID.fromString(conversationId);
+        UUID targetUserId = UUID.fromString(userIdStr);
+
+        Conversation conversation = conversationRepository.findById(cId).orElseThrow(() -> new AppException(ErrorCode.INPUT_INVALID));
+
+        MemberId currentMemberId = new MemberId(cId, currentUser.getId());
+        Member currentMember = memberRepository.findById(currentMemberId).orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+
+        if (!currentUser.getId().equals(targetUserId) && !MemberRole.ADMIN.equals(currentMember.getRole())) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        MemberId targetMemberId = new MemberId(cId, targetUserId);
+        if (!memberRepository.existsById(targetMemberId)) {
+            throw new AppException(ErrorCode.INPUT_INVALID);
+        }
+
+        memberRepository.deleteById(targetMemberId);
+    }
+
+    @Transactional
+    public void changeMemberRole(String conversationId, String userIdStr, ChangeMemberRoleRequest request) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = auth.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        UUID cId = UUID.fromString(conversationId);
+        UUID targetUserId = UUID.fromString(userIdStr);
+
+        Conversation conversation = conversationRepository.findById(cId).orElseThrow(() -> new AppException(ErrorCode.INPUT_INVALID));
+
+        if (!Boolean.TRUE.equals(conversation.getIsGroup())) {
+            throw new AppException(ErrorCode.INPUT_INVALID);
+        }
+
+        MemberId currentMemberId = new MemberId(cId, currentUser.getId());
+        Member currentMember = memberRepository.findById(currentMemberId).orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+
+        if (!MemberRole.ADMIN.equals(currentMember.getRole())) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        MemberId targetMemberId = new MemberId(cId, targetUserId);
+        Member targetMember = memberRepository.findById(targetMemberId).orElseThrow(() -> new AppException(ErrorCode.INPUT_INVALID));
+
+        try {
+            MemberRole newRole = MemberRole.valueOf(request.getRole());
+            targetMember.setRole(newRole);
+            memberRepository.save(targetMember);
+        } catch (IllegalArgumentException ex) {
+            throw new AppException(ErrorCode.INPUT_INVALID);
+        }
     }
 }

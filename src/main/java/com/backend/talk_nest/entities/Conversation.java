@@ -24,6 +24,9 @@ public class Conversation {
     @Column(name = "is_group", nullable = false)
     private Boolean isGroup;
 
+    @Transient
+    private String avatarUrl;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_message_id")
     private Message lastMessage;
