@@ -5,9 +5,6 @@ import com.backend.talk_nest.dtos.conversations.requests.ChangeMemberRoleRequest
 import com.backend.talk_nest.dtos.conversations.requests.CreateConversationRequest;
 import com.backend.talk_nest.dtos.conversations.requests.UpdateConversationRequest;
 import com.backend.talk_nest.dtos.conversations.responses.ConversationResponse;
-import com.backend.talk_nest.dtos.messages.SendMessageResponse;
-import com.backend.talk_nest.dtos.members.responses.MemberResponse;
-import com.backend.talk_nest.dtos.users.responses.UserResponse;
 import com.backend.talk_nest.entities.Conversation;
 import com.backend.talk_nest.entities.Member;
 import com.backend.talk_nest.entities.User;
@@ -54,7 +51,7 @@ public class ConversationService {
 
         if (Objects.equals(request.getType(), ConversationType.PRIVATE.toString())) {
             if (request.getParticipantIds().size() == 1) {
-                UUID userAId = UUID.fromString(request.getParticipantIds().getFirst());
+                UUID userAId = UUID.fromString(request.getParticipantIds().get(0));
                 var existingConversation = conversationRepository.findPrivateConversation(userAId, currentUser.getId());
                 if (existingConversation.isPresent()) {
                     return conversationMapper.toResponse(existingConversation.get());
@@ -84,7 +81,7 @@ public class ConversationService {
                     .isActive(false)
                     .lastActive(OffsetDateTime.now())
                     .user(user)
-                    .role(request.getType().equals(ConversationType.GROUP.toString()) && userId.equals(currentUser.getId().toString()) ? MemberRole.ADMIN : MemberRole.MEMBER)
+                    .role((request.getType().equals(ConversationType.GROUP.toString()) && userId.equals(currentUser.getId().toString()) || request.getType().equals(ConversationType.PRIVATE.toString())) ? MemberRole.ADMIN : MemberRole.MEMBER)
                     .joinedAt(OffsetDateTime.now())
                     .build();
             memberRepository.save(member);
@@ -117,6 +114,38 @@ public class ConversationService {
         }
 
         return responses;
+    }
+
+    public ConversationResponse getConversationById(String conversationId) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        UUID cId = UUID.fromString(conversationId);
+        Conversation conversation = conversationRepository.findById(cId).orElseThrow(() -> new AppException(ErrorCode.INPUT_INVALID));
+
+        List<Member> members = memberRepository.findMemberByConversation_Id(cId);
+        boolean isMember = members.stream().anyMatch(m -> Objects.equals(m.getId().getUserId(), currentUser.getId()));
+        if (!isMember) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        ConversationResponse resp = conversationMapper.toResponse(conversation);
+        resp.setMemberList(members.stream().map(memberMapper::toResponse).toList());
+
+        if (conversation.getLastMessage() != null) {
+            resp.setLastMessage(messageMapper.toResponse(conversation.getLastMessage()));
+        }
+        if (!Boolean.TRUE.equals(conversation.getIsGroup())) {
+            for (Member m : members) {
+                if (!m.getUser().getId().equals(currentUser.getId())) {
+                    resp.setCounterpart(userMapper.toResponse(m.getUser()));
+                    break;
+                }
+            }
+        }
+
+        return resp;
     }
 
     @Transactional
@@ -172,14 +201,15 @@ public class ConversationService {
         Conversation conversation = conversationRepository.findById(cId).orElseThrow(() -> new AppException(ErrorCode.INPUT_INVALID));
 
         if (!Boolean.TRUE.equals(conversation.getIsGroup())) {
-            throw new AppException(ErrorCode.INPUT_INVALID);
+            conversation.setIsGroup(true);
+            conversationRepository.save(conversation);
         }
 
         MemberId currentMemberId = new MemberId(cId, currentUser.getId());
         Member currentMember = memberRepository.findById(currentMemberId).orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
 
         if (!MemberRole.ADMIN.equals(currentMember.getRole())) {
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
+            throw new AppException(ErrorCode.PERMISSION_NOT_ALLOWED);
         }
 
         for (String userIdStr : request.getUserIds()) {

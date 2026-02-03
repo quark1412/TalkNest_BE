@@ -27,7 +27,10 @@ public enum ErrorCode {
     // Errors related to User
     USERNAME_ALREADY_EXIST(100, "Username đã được sử dụng", HttpStatus.BAD_REQUEST),
     EMAIL_ALREADY_EXIST(101, "Email đã được sử dụng", HttpStatus.BAD_REQUEST),
-    USER_NOT_FOUND(102, "Người dùng không tồn tại", HttpStatus.NOT_FOUND);
+    USER_NOT_FOUND(102, "Người dùng không tồn tại", HttpStatus.NOT_FOUND),
+
+    // Errors related to Conversation
+    PERMISSION_NOT_ALLOWED(200, "Chỉ ADMIN mới có quyền thực hiện", HttpStatus.FORBIDDEN);
 
     private final int code;
     private final String message;
